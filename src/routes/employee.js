@@ -4,7 +4,7 @@ const verifyJwt = require("../middleware/auth");
 const {
   validateAddEmployeeRequestBody,
   validateUpdateEmployeeRequestBody,
-} = require("../validator");
+} = require("../validator/employee");
 
 router.post("/", verifyJwt, async (req, res) => {
   try {

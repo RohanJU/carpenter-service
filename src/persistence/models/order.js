@@ -1,36 +1,30 @@
 const mongoose = require("mongoose");
 
-const employeeSchema = new mongoose.Schema(
+const orderSchema = new mongoose.Schema(
   {
-    uuid: {
+    orderId: {
       type: String,
       required: true,
       unique: true,
     },
-    name: {
+    customerName: {
       type: String,
       required: true,
     },
-    email: {
-      type: String,
+    visitTime: {
+      type: Number,
       required: true,
-      unique: true,
     },
     phone: {
       type: String,
       required: true,
-      unique: true,
-    },
-    password: {
-      type: String,
-      required: true,
-    },
-    designation: {
-      type: String,
     },
     address: {
       type: String,
+      required: true,
     },
+    workers: [],
+    items: [],
     addedBy: {
       type: String,
       required: true,
@@ -38,12 +32,11 @@ const employeeSchema = new mongoose.Schema(
     modifiedBy: [],
     status: {
       type: String,
-      enum: ["ACTIVE", "DELETED"],
-      default: "ACTIVE",
+      enum: ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
+      default: "PENDING",
     },
   },
   { timestamps: true }
 );
 
-const Employee = mongoose.model("employee", employeeSchema);
-module.exports = Employee;
+module.exports = mongoose.model("order", orderSchema);

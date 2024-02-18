@@ -27,9 +27,8 @@ const validateUpdateEmployeeRequestBody = (body) => {
       .regex(new RegExp("^[0-9]+$"))
       .optional(),
     designation: Joi.string().optional(),
-    salary: Joi.string()
-      .regex(new RegExp("^(?!0+(?:\\.0+)?$)[0-9]+(?:\\.[0-9]+)?$"))
-      .optional(),
+    password: Joi.string().min(4).max(8).optional(),
+    address: Joi.string().optional(),
   })
     .min(1)
     .unknown();
@@ -58,5 +57,5 @@ const validateGetEmployeeRequestQuery = (query) => {
 module.exports = {
   validateAddEmployeeRequestBody,
   validateUpdateEmployeeRequestBody,
-  validateGetEmployeeRequestQuery
+  validateGetEmployeeRequestQuery,
 };

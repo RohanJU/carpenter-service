@@ -6,11 +6,12 @@ const {
   validateAddEmployeeRequestBody,
   validateUpdateEmployeeRequestBody,
   validateGetEmployeeRequestQuery,
-} = require("../validator");
+} = require("../validator/employee");
 const { hash } = require("../utils/encryption");
 
 router.post("/add-employee", verifyJwt, async (req, res) => {
   try {
+    const adminUuid = req.user.uuid;
     const { name, email, phone, password, designation, address } =
       validateAddEmployeeRequestBody(req.body);
 
@@ -24,6 +25,7 @@ router.post("/add-employee", verifyJwt, async (req, res) => {
       password: passwordHash,
       designation,
       address,
+      addedBy: adminUuid,
     });
 
     await newEployee.save();
@@ -38,6 +40,8 @@ router.post("/add-employee", verifyJwt, async (req, res) => {
         phone,
         designation,
         address,
+        addedBy: req.user.uuid,
+        modifiedBy: [],
       },
     });
   } catch (e) {
@@ -53,7 +57,9 @@ router.post("/add-employee", verifyJwt, async (req, res) => {
 router.get("/get-employee", verifyJwt, async (req, res) => {
   try {
     const { skip, limit } = validateGetEmployeeRequestQuery(req.query);
-    const employees = await Employee.find().skip(skip).limit(limit);
+    const employees = await Employee.find({ status: "ACTIVE" })
+      .skip(skip)
+      .limit(limit);
 
     return res.status(200).json({
       status: 200,
@@ -65,6 +71,8 @@ router.get("/get-employee", verifyJwt, async (req, res) => {
           phone: employee.phone,
           designation: employee.designation,
           address: employee.address,
+          addedBy: employee.addedBy,
+          modifiedBy: employee.modifiedBy,
         };
       }),
     });
@@ -78,20 +86,30 @@ router.get("/get-employee", verifyJwt, async (req, res) => {
   }
 });
 
-router.get("/:id", verifyJwt, async (req, res) => {
+router.get("/get-employee/:uuid", verifyJwt, async (req, res) => {
   try {
-    const { id } = req.params;
-    const employee = await Employee.findById(id);
+    const { uuid } = req.params;
+    const employee = await Employee.findOne({ uuid, status: "ACTIVE" });
+
+    if (!employee) {
+      return res.status(404).json({
+        status: 404,
+        message: "Not Found",
+        data: null,
+      });
+    }
 
     return res.status(200).json({
       status: 200,
       data: {
-        id: employee.id,
+        uuid: employee.uuid,
         name: employee.name,
         email: employee.email,
         phone: employee.phone,
         designation: employee.designation,
-        salary: employee.salary,
+        address: employee.address,
+        addedBy: employee.addedBy,
+        modifiedBy: employee.modifiedBy,
       },
     });
   } catch (e) {
@@ -104,11 +122,22 @@ router.get("/:id", verifyJwt, async (req, res) => {
   }
 });
 
-router.patch("/:id", verifyJwt, async (req, res) => {
+router.patch("/update-employee/:uuid", verifyJwt, async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, email, phone, designation, salary } =
+    const adminUuid = req.user.uuid;
+    const { uuid } = req.params;
+    const { name, email, phone, designation, address, password } =
       validateUpdateEmployeeRequestBody(req.body);
+
+    const employee = await Employee.findOne(filter);
+
+    if (!employee) {
+      return res.status(404).json({
+        status: 404,
+        message: "Not Found",
+        data: null,
+      });
+    }
 
     const updateObj = {};
 
@@ -128,21 +157,35 @@ router.patch("/:id", verifyJwt, async (req, res) => {
       updateObj["designation"] = designation;
     }
 
-    if (salary) {
-      updateObj["salary"] = salary;
+    if (address) {
+      updateObj["address"] = salary;
     }
 
-    const updatedEmployee = await Employee.findByIdAndUpdate(id, updateObj, {
-      new: true,
-    });
+    if (password) {
+      const passwordHash = await hash(password);
+      updateObj['password'] = passwordHash;
+    }
+
+    const modifiedBy = employee.modifiedBy;
+    modifiedBy.push(adminUuid);
+
+    updateObj["modifiedBy"] = modifiedBy;
+
+    const updatedEmployee = await Employee.findOneAndUpdate(
+      { uuid },
+      updateObj,
+      { new: true }
+    );
     return res.status(200).json({
       status: 200,
       data: {
-        id: updatedEmployee.id,
+        uuid: updatedEmployee.uuid,
         name: updatedEmployee.name,
         phone: updatedEmployee.phone,
         designation: updatedEmployee.designation,
-        salary: updatedEmployee.salary,
+        address: updatedEmployee.address,
+        addedBy: updatedEmployee.addedBy,
+        modifiedBy: updatedEmployee.modifiedBy,
       },
       message: "Employee Details Updated Successfully!",
     });
@@ -156,11 +199,36 @@ router.patch("/:id", verifyJwt, async (req, res) => {
   }
 });
 
-router.delete("/:id", verifyJwt, async (req, res) => {
+router.delete("/delete-employee/:uuid", verifyJwt, async (req, res) => {
   try {
-    const { id } = req.params;
+    const adminUuid = req.user.uuid;
+    const { uuid } = req.params;
 
-    const deletedEmployee = await Employee.findByIdAndDelete(id);
+    const filter = { uuid, status: "ACTIVE" };
+
+    const employee = await Employee.findOne(filter);
+
+    if (!employee) {
+      return res.status(404).json({
+        status: 404,
+        message: "Not Found",
+        data: null,
+      });
+    }
+
+    const modifiedBy = employee.modifiedBy;
+    modifiedBy.push(adminUuid);
+
+    const updateObj = {
+      status: "INACTIVE",
+      uuid: `${uuidv4().substring(0, 5)}.DEL.${employee.uuid}`,
+      email: `${uuidv4().substring(0, 5)}.DEL.${employee.email}`,
+      phone: `${uuidv4().substring(0, 5)}.DEL.${employee.phone}`,
+      modifiedBy: modifiedBy,
+    };
+
+    await Employee.updateOne(filter, updateObj);
+
     return res.status(200).json({
       status: 200,
       message: "Employee Deleted Successfully!",

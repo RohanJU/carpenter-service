@@ -24,7 +24,6 @@ function verifyjwt(req, res, next) {
     });
 
   try {
-    console.log(token);
     const decoded = jwt.verify(token, config.jwt.secret);
     req.user = decoded;
     next();

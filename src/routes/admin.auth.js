@@ -86,7 +86,8 @@ router.post("/otp/verify", async (req, res) => {
 
     const token = jwt.sign(
       {
-        email,
+        uuid: admin.uuid,
+        type: "VERIFICATION_TOKEN"
       },
       config.jwt.secret,
       {
@@ -98,7 +99,7 @@ router.post("/otp/verify", async (req, res) => {
       status: 200,
       message: "Logged In",
       data: {
-        token,
+        verificationToken: token,
       },
     });
   } catch (e) {
@@ -139,7 +140,8 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign(
       {
-        email,
+        uuid: admin.uuid,
+        type: "ACCESS_TOKEN"
       },
       config.jwt.secret,
       {
@@ -166,9 +168,9 @@ router.post("/login", async (req, res) => {
 
 router.get("/profile", auth, async (req, res) => {
   try {
-    const { email } = req.user;
+    const { uuid } = req.user;
 
-    const admin = await Admin.findOne({ email });
+    const admin = await Admin.findOne({ uuid });
 
     if (!admin) {
       return res.status(401).json({
@@ -180,7 +182,7 @@ router.get("/profile", auth, async (req, res) => {
 
     return res.status(200).json({
       status: 200,
-      message: "Logged In",
+      message: "Profile",
       data: {
         name: admin.name,
         email: admin.email,
@@ -190,7 +192,7 @@ router.get("/profile", auth, async (req, res) => {
       },
     });
   } catch (e) {
-    console.error(`Error in logging in`, e);
+    console.error(`Error in fetching profile`, e);
     return res.status(500).json({
       status: 500,
       message: "Internal server error",

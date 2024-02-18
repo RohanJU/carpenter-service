@@ -6,6 +6,7 @@ const connectDB = require("./src/persistence/connectDB");
 const employeeRoute = require("./src/routes/employee");
 const adminAuthRoute = require("./src/routes/admin.auth");
 const adminRoute = require("./src/routes/admin");
+const orderRoute = require("./src/routes/order");
 const employeeAuthRoute = require("./src/routes/employee.auth");
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use("/employee", employeeRoute);
 app.use("/auth/admin", adminAuthRoute);
 app.use("/admin", adminRoute);
+app.use("/order", orderRoute);
 app.use("/auth/employee", employeeAuthRoute);
 
 app.get("/", (__, res) => {

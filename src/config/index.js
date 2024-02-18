@@ -21,6 +21,10 @@ const config = {
     email: process.env.COMMUNICATION_FROM_EMAIL,
     phone: process.env.COMMUNICATION_FROM_PHONE,
   },
+  aws: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY,
+  },
 };
 
 module.exports = config;
