@@ -29,14 +29,14 @@ app.get("/", (__, res) => {
   });
 });
 
-// app.use("*", (__, res) => {
-//   console.log(__.baseUrl);
-//   return res.status(404).json({
-//     status: 404,
-//     message: "Invalid Path",
-//     data: null,
-//   });
-// });
+app.use("*", (__, res) => {
+  console.log(__.baseUrl);
+  return res.status(404).json({
+    status: 404,
+    message: "Invalid Path",
+    data: null,
+  });
+});
 
 const startApp = () => {
   app.listen(config.port, async () => {
