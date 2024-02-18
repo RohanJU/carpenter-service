@@ -26,7 +26,7 @@ function verifyjwt(req, res, next) {
   try {
     console.log(token);
     const decoded = jwt.verify(token, config.jwt.secret);
-    req.admin = decoded;
+    req.user = decoded;
     next();
   } catch (e) {
     console.log(`Error while authenticating`, e);

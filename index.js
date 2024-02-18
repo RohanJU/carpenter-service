@@ -1,10 +1,12 @@
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
-const config = require("./config");
-const connectDB = require("./persistence/connectDB");
-const employeeRoute = require("./routes/employee");
-const adminRoute = require("./routes/auth");
+const config = require("./src/config");
+const connectDB = require("./src/persistence/connectDB");
+const employeeRoute = require("./src/routes/employee");
+const adminAuthRoute = require("./src/routes/admin.auth");
+const adminRoute = require("./src/routes/admin");
+const employeeAuthRoute = require("./src/routes/employee.auth");
 const app = express();
 
 const logPrefix = "INDEX:";
@@ -16,7 +18,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use("/employee", employeeRoute);
+app.use("/auth/admin", adminAuthRoute);
 app.use("/admin", adminRoute);
+app.use("/auth/employee", employeeAuthRoute);
 
 app.get("/", (__, res) => {
   return res.status(200).json({
@@ -25,13 +29,14 @@ app.get("/", (__, res) => {
   });
 });
 
-app.use("*", (__, res) => {
-  return res.status(500).json({
-    status: 500,
-    message: "Internal server error",
-    data: null,
-  });
-});
+// app.use("*", (__, res) => {
+//   console.log(__.baseUrl);
+//   return res.status(404).json({
+//     status: 404,
+//     message: "Invalid Path",
+//     data: null,
+//   });
+// });
 
 const startApp = () => {
   app.listen(config.port, async () => {
