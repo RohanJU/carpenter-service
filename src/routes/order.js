@@ -7,7 +7,6 @@ const {
   validateUpdateOrderRequestBody,
   validateGetOrderRequestQuery,
 } = require("../validator/order");
-const { hash } = require("../utils/encryption");
 
 router.post("/add-order", verifyJwt, async (req, res) => {
   try {
@@ -177,16 +176,13 @@ router.patch("/update-order/:orderId", verifyJwt, async (req, res) => {
       updateObj["status"] = status;
     }
 
-    const modifiedBy = order.modifiedBy;
-    modifiedBy.push(adminUuid);
+    console.log(adminUuid);
 
-    updateObj["modifiedBy"] = modifiedBy;
+    updateObj["$push"] = { modifiedBy: adminUuid };
 
-    const updatedOrder = await Order.findOneAndUpdate(
-      { orderId },
-      updateObj,
-      { new: true }
-    );
+    const updatedOrder = await Order.findOneAndUpdate({ orderId }, updateObj, {
+      new: true,
+    });
 
     return res.status(200).json({
       status: 200,

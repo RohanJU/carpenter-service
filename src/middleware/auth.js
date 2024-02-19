@@ -4,6 +4,7 @@ const config = require("../config");
 function verifyjwt(req, res, next) {
   const tokenWithBearerPrefix = req.headers["authorization"];
   if (
+    !tokenWithBearerPrefix ||
     !typeof tokenWithBearerPrefix === "string" ||
     tokenWithBearerPrefix.split(" ").length < 2
   ) {
@@ -25,6 +26,7 @@ function verifyjwt(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, config.jwt.secret);
+    console.log(decoded);
     req.user = decoded;
     next();
   } catch (e) {

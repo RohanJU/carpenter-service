@@ -2,15 +2,19 @@ const router = require("express").Router();
 const jwt = require("jsonwebtoken");
 const Admin = require("../persistence/models/admin");
 const auth = require("../middleware/auth");
-const { verify } = require("../utils/encryption");
+const { verify, hash } = require("../utils/encryption");
 const config = require("../config");
 const { getRandomOTP } = require("../utils");
-const { sendOtpOnEmail, sendOtpOnPhone } = require("../libs/communication");
-const Otp = require("../persistence/models/otp");
+const { redisClient } = require("../persistence/connectRedis");
+const verifyjwt = require("../middleware/auth");
+const { sendEmail } = require("../libs/SES");
+const { sendSMS } = require("../libs/SNS");
+const allowedRoles = require("../middleware/allowedRoles");
 
 const tokenExpiritionSeconds = 60 * 60;
 const isMockOtp = true;
 const mockOtp = "1234";
+const REDIS_TTL_SECONDS = 60;
 
 router.post("/otp/send", async (req, res) => {
   try {
@@ -30,17 +34,24 @@ router.post("/otp/send", async (req, res) => {
     const otpForSMS = isMockOtp ? mockOtp : getRandomOTP(4);
 
     if (!isMockOtp) {
-      await sendOtpOnEmail(admin.email, otpForEmail);
-      await sendOtpOnPhone(admin.phone, otpForSMS);
+      const sesResponse = await sendEmail(
+        email,
+        `Carpenter`,
+        `Your OTP: ${otpForEmail}`
+      );
+      const snsResponse = await sendSMS(phone, `Your OTP: ${otpForSMS}`);
     }
 
-    const otp = new Otp({
-      uuid: admin.uuid,
-      phoneOtp: otpForSMS,
-      emailOtp: otpForEmail,
+    const smsKey = `${admin.uuid}_SMS_OTP`;
+    const emailKey = `${admin.uuid}_EMAIL_OTP`;
+
+    await redisClient.set(smsKey, otpForSMS, {
+      EX: REDIS_TTL_SECONDS,
     });
 
-    await otp.save();
+    await redisClient.set(emailKey, otpForEmail, {
+      EX: REDIS_TTL_SECONDS,
+    });
 
     return res.status(200).json({
       status: 200,
@@ -74,9 +85,13 @@ router.post("/otp/verify", async (req, res) => {
       });
     }
 
-    const otp = await Otp.findOne({ uuid: admin.uuid });
+    const smsKey = `${admin.uuid}_SMS_OTP`;
+    const emailKey = `${admin.uuid}_EMAIL_OTP`;
 
-    if (emailOtp !== otp.emailOtp || phoneOtp !== otp.phoneOtp) {
+    const smsOtpStored = await redisClient.get(smsKey);
+    const emailOtpStored = await redisClient.get(emailKey);
+
+    if (emailOtp !== emailOtpStored || phoneOtp !== smsOtpStored) {
       return res.status(401).json({
         status: 401,
         message: "Unauthorized",
@@ -87,7 +102,8 @@ router.post("/otp/verify", async (req, res) => {
     const token = jwt.sign(
       {
         uuid: admin.uuid,
-        type: "VERIFICATION_TOKEN"
+        verificationTokenType: "PASSWORD_RESET_TOKEN",
+        role: "ADMIN",
       },
       config.jwt.secret,
       {
@@ -99,7 +115,7 @@ router.post("/otp/verify", async (req, res) => {
       status: 200,
       message: "Logged In",
       data: {
-        verificationToken: token,
+        token,
       },
     });
   } catch (e) {
@@ -111,6 +127,52 @@ router.post("/otp/verify", async (req, res) => {
     });
   }
 });
+
+router.post(
+  "/password/reset",
+  verifyjwt,
+  allowedRoles(["ADMIN"]),
+  async (req, res) => {
+    try {
+      const { uuid, verificationTokenType } = req.user;
+      const { password } = req.body;
+
+      if (verificationTokenType !== "PASSWORD_RESET_TOKEN") {
+        return res.status(401).json({
+          status: 401,
+          message: "Unauthorized",
+          data: null,
+        });
+      }
+
+      const admin = await Admin.findOne({ uuid });
+
+      if (!admin) {
+        return res.status(401).json({
+          status: 401,
+          message: "Unauthorized",
+          data: null,
+        });
+      }
+
+      const passwordHash = await hash(password);
+
+      await Admin.updateOne({ uuid }, { password: passwordHash });
+
+      return res.status(200).json({
+        status: 200,
+        message: "Password Reseted",
+      });
+    } catch (e) {
+      console.error(`Error in sending OTP`, e);
+      return res.status(500).json({
+        status: 500,
+        message: "Internal server error",
+        data: null,
+      });
+    }
+  }
+);
 
 router.post("/login", async (req, res) => {
   try {
@@ -141,7 +203,8 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       {
         uuid: admin.uuid,
-        type: "ACCESS_TOKEN"
+        verificationTokenType: "ACCESS_TOKEN",
+        role: "ADMIN",
       },
       config.jwt.secret,
       {
@@ -166,7 +229,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.get("/profile", auth, async (req, res) => {
+router.get("/profile", auth, allowedRoles(["ADMIN"]), async (req, res) => {
   try {
     const { uuid } = req.user;
 

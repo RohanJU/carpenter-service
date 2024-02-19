@@ -24,6 +24,12 @@ const config = {
   aws: {
     accessKeyId: process.env.AWS_ACCESS_KEY,
     secretAccessKey: process.env.AWS_SECRET_KEY,
+    bucketName: process.env.S3_BUCKET_NAME,
+  },
+  redis: {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
   },
 };
 

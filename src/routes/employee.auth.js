@@ -4,6 +4,7 @@ const Employee = require("../persistence/models/employee");
 const { verify } = require("../utils/encryption");
 const config = require("../config");
 const verifyjwt = require("../middleware/auth");
+const allowedRoles = require("../middleware/allowedRoles");
 
 const tokenExpiritionSeconds = 7 * 24 * 60 * 60;
 
@@ -34,6 +35,8 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       {
         uuid: employee.uuid,
+        verificationTokenType: "ACCESS_TOKEN",
+        role: "EMPLOYEE"
       },
       config.jwt.secret,
       {
@@ -58,7 +61,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.get("/profile", verifyjwt, async (req, res) => {
+router.get("/profile", verifyjwt, allowedRoles(['EMPLOYEE']), async (req, res) => {
   try {
     const { uuid } = req.user;
 
