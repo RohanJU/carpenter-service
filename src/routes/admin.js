@@ -66,25 +66,36 @@ router.get(
   allowedRoles(["ADMIN"]),
   async (req, res) => {
     try {
-      const { skip, limit } = validateGetEmployeeRequestQuery(req.query);
-      const employees = await Employee.find({ status: "ACTIVE" })
-        .skip(skip)
-        .limit(limit);
+      const { pageNumber, pageSize } = validateGetEmployeeRequestQuery(
+        req.query
+      );
+
+      const filter = { status: "ACTIVE" };
+      const skip = (pageNumber - 1) * pageSize;
+      const limit = pageSize;
+
+      const totalCount = await Employee.countDocuments(filter);
+      const employees = await Employee.find(filter).skip(skip).limit(limit);
 
       return res.status(200).json({
         status: 200,
-        data: employees.map((employee) => {
-          return {
-            uuid: employee.uuid,
-            name: employee.name,
-            email: employee.email,
-            phone: employee.phone,
-            designation: employee.designation,
-            address: employee.address,
-            addedBy: employee.addedBy,
-            modifiedBy: employee.modifiedBy,
-          };
-        }),
+        data: {
+          pageNumber,
+          pageSize,
+          totalCount,
+          employees: employees.map((employee) => {
+            return {
+              uuid: employee.uuid,
+              name: employee.name,
+              email: employee.email,
+              phone: employee.phone,
+              designation: employee.designation,
+              address: employee.address,
+              addedBy: employee.addedBy,
+              modifiedBy: employee.modifiedBy,
+            };
+          }),
+        },
       });
     } catch (e) {
       console.error(`Error in get employees`, e);

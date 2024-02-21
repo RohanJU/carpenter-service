@@ -55,31 +55,42 @@ router.post("/add-order", verifyJwt, async (req, res) => {
 
 router.get("/get-order", verifyJwt, async (req, res) => {
   try {
-    const { skip, limit, status } = validateGetOrderRequestQuery(req.query);
+    const { pageNumber, pageSize, status } = validateGetOrderRequestQuery(
+      req.query
+    );
     const filter = {};
 
     if (status) {
       filter["status"] = status;
     }
 
+    const skip = (pageNumber - 1) * pageSize;
+    const limit = pageSize;
+
+    const totalCount = await Order.countDocuments(filter);
     const orders = await Order.find(filter).skip(skip).limit(limit);
 
     return res.status(200).json({
       status: 200,
-      data: orders.map((order) => {
-        return {
-          orderId: order.orderId,
-          customerName: order.customerName,
-          visitTime: order.visitTime,
-          phone: order.phone,
-          address: order.address,
-          workers: order.workers,
-          items: order.items,
-          addedBy: order.addedBy,
-          modifiedBy: order.modifiedBy,
-          status: order.status,
-        };
-      }),
+      data: {
+        pageNumber,
+        pageSize,
+        totalCount,
+        orders: orders.map((order) => {
+          return {
+            orderId: order.orderId,
+            customerName: order.customerName,
+            visitTime: order.visitTime,
+            phone: order.phone,
+            address: order.address,
+            workers: order.workers,
+            items: order.items,
+            addedBy: order.addedBy,
+            modifiedBy: order.modifiedBy,
+            status: order.status,
+          };
+        }),
+      },
     });
   } catch (e) {
     console.error(`Error in get order`, e);

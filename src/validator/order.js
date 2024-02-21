@@ -39,16 +39,18 @@ const validateUpdateOrderRequestBody = (body) => {
 
 const validateGetOrderRequestQuery = (query) => {
   const q = {
-    skip:
-      query.skip && typeof query.skip === "string" && parseInt(query.skip) > 0
-        ? parseInt(query.skip)
-        : 0,
-    limit:
-      query.limit &&
-      typeof query.limit === "string" &&
-      parseInt(query.limit) > 0 &&
-      parseInt(query.limit) < 10
-        ? parseInt(query.limit)
+    pageNumber:
+      query.pageNumber &&
+      typeof query.pageNumber === "string" &&
+      parseInt(query.pageNumber) > 0
+        ? parseInt(query.pageNumber)
+        : 1,
+    pageSize:
+      query.pageSize &&
+      typeof query.pageSize === "string" &&
+      parseInt(query.pageSize) > 0 &&
+      parseInt(query.pageSize) <= 10
+        ? parseInt(query.pageSize)
         : 10,
     status: query.status,
   };
