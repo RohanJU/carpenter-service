@@ -69,7 +69,7 @@ router.post(
 
       return res.status(500).json({
         status: 500,
-        message: "Internal server error",
+        message: e.message || "Internal server error",
         data: null,
       });
     }
@@ -119,7 +119,7 @@ router.get(
 
       return res.status(500).json({
         status: 500,
-        message: "Internal server error",
+        message: e.message || "Internal server error",
         data: null,
       });
     }
@@ -163,7 +163,7 @@ router.get(
 
       return res.status(500).json({
         status: 500,
-        message: "Internal server error",
+        message: e.message || "Internal server error",
         data: null,
       });
     }
@@ -240,7 +240,7 @@ router.patch(
 
       return res.status(500).json({
         status: 500,
-        message: "Internal server error",
+        message: e.message || "Internal server error",
         data: null,
       });
     }
@@ -277,7 +277,7 @@ router.delete(
 
       return res.status(500).json({
         status: 500,
-        message: "Internal server error",
+        message: e.message || "Internal server error",
         data: null,
       });
     }

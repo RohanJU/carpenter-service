@@ -57,7 +57,7 @@ router.post("/add-order", verifyJwt, async (req, res) => {
 
     return res.status(500).json({
       status: 500,
-      message: "Internal server error",
+      message: e.message || "Internal server error",
       data: null,
     });
   }
@@ -116,7 +116,7 @@ router.get("/get-order", verifyJwt, async (req, res) => {
 
     return res.status(500).json({
       status: 500,
-      message: "Internal server error",
+      message: e.message || "Internal server error",
       data: null,
     });
   }
@@ -164,7 +164,7 @@ router.get("/get-order/:orderId", verifyJwt, async (req, res) => {
 
     return res.status(500).json({
       status: 500,
-      message: "Internal server error",
+      message: e.message || "Internal server error",
       data: null,
     });
   }
@@ -255,7 +255,7 @@ router.patch("/update-order/:orderId", verifyJwt, async (req, res) => {
 
     return res.status(500).json({
       status: 500,
-      message: "Internal server error",
+      message: e.message || "Internal server error",
       data: null,
     });
   }
