@@ -57,6 +57,16 @@ router.post(
       });
     } catch (e) {
       console.error(`Error in post employee`, e);
+
+      if (e.name === "ValidationError") {
+        const message = e.message || "Bad request";
+        return res.status(400).json({
+          status: 400,
+          message: message.split(":")[0],
+          data: null,
+        });
+      }
+
       return res.status(500).json({
         status: 500,
         message: "Internal server error",
@@ -97,6 +107,16 @@ router.get(
       });
     } catch (e) {
       console.error(`Error in get employee by id`, e);
+
+      if (e.name === "ValidationError") {
+        const message = e.message || "Bad request";
+        return res.status(400).json({
+          status: 400,
+          message: message.split(":")[0],
+          data: null,
+        });
+      }
+
       return res.status(500).json({
         status: 500,
         message: "Internal server error",
@@ -131,6 +151,16 @@ router.get(
       });
     } catch (e) {
       console.error(`Error in get employee by id`, e);
+
+      if (e.name === "ValidationError") {
+        const message = e.message || "Bad request";
+        return res.status(400).json({
+          status: 400,
+          message: message.split(":")[0],
+          data: null,
+        });
+      }
+
       return res.status(500).json({
         status: 500,
         message: "Internal server error",
@@ -198,6 +228,16 @@ router.patch(
       });
     } catch (e) {
       console.error(`Error in post employee`, e);
+
+      if (e.name === "ValidationError") {
+        const message = e.message || "Bad request";
+        return res.status(400).json({
+          status: 400,
+          message: message.split(":")[0],
+          data: null,
+        });
+      }
+
       return res.status(500).json({
         status: 500,
         message: "Internal server error",
@@ -225,6 +265,16 @@ router.delete(
       });
     } catch (e) {
       console.log(`Error deleting the employee`, e);
+
+      if (e.name === "ValidationError") {
+        const message = e.message || "Bad request";
+        return res.status(400).json({
+          status: 400,
+          message: message.split(":")[0],
+          data: null,
+        });
+      }
+
       return res.status(500).json({
         status: 500,
         message: "Internal server error",

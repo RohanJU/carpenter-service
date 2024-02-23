@@ -10,6 +10,12 @@ const verifyjwt = require("../middleware/auth");
 const { sendEmail } = require("../libs/SES");
 const { sendSMS } = require("../libs/SNS");
 const allowedRoles = require("../middleware/allowedRoles");
+const {
+  validateAdminAuthSendOtpRequestBody,
+  validateAdminAuthVerifyOtpRequestBody,
+  validateAdminAuthResetPasswordRequestBody,
+  validateAdminAuthLoginRequestBody,
+} = require("../validator/admin.auth");
 
 const tokenExpiritionSeconds = 60 * 60;
 const isMockOtp = true;
@@ -18,7 +24,7 @@ const REDIS_TTL_SECONDS = 60;
 
 router.post("/otp/send", async (req, res) => {
   try {
-    const { email, phone } = req.body;
+    const { email, phone } = validateAdminAuthSendOtpRequestBody(req.body);
 
     const admin = await Admin.findOne({ email, phone });
 
@@ -63,6 +69,16 @@ router.post("/otp/send", async (req, res) => {
     });
   } catch (e) {
     console.error(`Error in sending OTP`, e);
+
+    if (e.name === "ValidationError") {
+      const message = e.message || "Bad request";
+      return res.status(400).json({
+        status: 400,
+        message: message.split(":")[0],
+        data: null,
+      });
+    }
+
     return res.status(500).json({
       status: 500,
       message: "Internal server error",
@@ -73,7 +89,8 @@ router.post("/otp/send", async (req, res) => {
 
 router.post("/otp/verify", async (req, res) => {
   try {
-    const { email, phone, emailOtp, phoneOtp } = req.body;
+    const { email, phone, emailOtp, phoneOtp } =
+      validateAdminAuthVerifyOtpRequestBody(req.body);
 
     const admin = await Admin.findOne({ email, phone });
 
@@ -120,6 +137,16 @@ router.post("/otp/verify", async (req, res) => {
     });
   } catch (e) {
     console.error(`Error in sending OTP`, e);
+
+    if (e.name === "ValidationError") {
+      const message = e.message || "Bad request";
+      return res.status(400).json({
+        status: 400,
+        message: message.split(":")[0],
+        data: null,
+      });
+    }
+
     return res.status(500).json({
       status: 500,
       message: "Internal server error",
@@ -135,7 +162,7 @@ router.post(
   async (req, res) => {
     try {
       const { uuid, verificationTokenType } = req.user;
-      const { password } = req.body;
+      const { password } = validateAdminAuthResetPasswordRequestBody(req.body);
 
       if (verificationTokenType !== "PASSWORD_RESET_TOKEN") {
         return res.status(401).json({
@@ -165,6 +192,16 @@ router.post(
       });
     } catch (e) {
       console.error(`Error in sending OTP`, e);
+
+      if (e.name === "ValidationError") {
+        const message = e.message || "Bad request";
+        return res.status(400).json({
+          status: 400,
+          message: message.split(":")[0],
+          data: null,
+        });
+      }
+
       return res.status(500).json({
         status: 500,
         message: "Internal server error",
@@ -176,7 +213,9 @@ router.post(
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, username, password } = req.body;
+    const { email, username, password } = validateAdminAuthLoginRequestBody(
+      req.body
+    );
 
     const admins = await Admin.find({ $or: [{ email }, { username }] });
 
@@ -221,6 +260,16 @@ router.post("/login", async (req, res) => {
     });
   } catch (e) {
     console.error(`Error in logging in`, e);
+
+    if (e.name === "ValidationError") {
+      const message = e.message || "Bad request";
+      return res.status(400).json({
+        status: 400,
+        message: message.split(":")[0],
+        data: null,
+      });
+    }
+
     return res.status(500).json({
       status: 500,
       message: "Internal server error",
@@ -256,6 +305,16 @@ router.get("/profile", auth, allowedRoles(["ADMIN"]), async (req, res) => {
     });
   } catch (e) {
     console.error(`Error in fetching profile`, e);
+
+    if (e.name === "ValidationError") {
+      const message = e.message || "Bad request";
+      return res.status(400).json({
+        status: 400,
+        message: message.split(":")[0],
+        data: null,
+      });
+    }
+
     return res.status(500).json({
       status: 500,
       message: "Internal server error",

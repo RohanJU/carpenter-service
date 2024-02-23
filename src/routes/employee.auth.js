@@ -5,12 +5,13 @@ const { verify } = require("../utils/encryption");
 const config = require("../config");
 const verifyjwt = require("../middleware/auth");
 const allowedRoles = require("../middleware/allowedRoles");
+const { validateEmployeeAuthLoginRequestBody } = require("../validator/employee.auth");
 
 const tokenExpiritionSeconds = 7 * 24 * 60 * 60;
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = validateEmployeeAuthLoginRequestBody(req.body);
 
     const employee = await Employee.findOne({ email });
 
@@ -53,6 +54,16 @@ router.post("/login", async (req, res) => {
     });
   } catch (e) {
     console.error(`Error in logging in`, e);
+
+    if (e.name === "ValidationError") {
+      const message = e.message || "Bad request";
+      return res.status(400).json({
+        status: 400,
+        message: message.split(":")[0],
+        data: null,
+      });
+    }
+
     return res.status(500).json({
       status: 500,
       message: "Internal server error",
@@ -89,6 +100,16 @@ router.get("/profile", verifyjwt, allowedRoles(['EMPLOYEE']), async (req, res) =
     });
   } catch (e) {
     console.error(`Error in fetching profile`, e);
+
+    if (e.name === "ValidationError") {
+      const message = e.message || "Bad request";
+      return res.status(400).json({
+        status: 400,
+        message: message.split(":")[0],
+        data: null,
+      });
+    }
+
     return res.status(500).json({
       status: 500,
       message: "Internal server error",

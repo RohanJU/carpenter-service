@@ -45,6 +45,16 @@ router.post("/add-order", verifyJwt, async (req, res) => {
     });
   } catch (e) {
     console.error(`Error in post order`, e);
+
+    if (e.name === "ValidationError") {
+      const message = e.message || "Bad request";
+      return res.status(400).json({
+        status: 400,
+        message: message.split(":")[0],
+        data: null,
+      });
+    }
+
     return res.status(500).json({
       status: 500,
       message: "Internal server error",
@@ -94,6 +104,16 @@ router.get("/get-order", verifyJwt, async (req, res) => {
     });
   } catch (e) {
     console.error(`Error in get order`, e);
+
+    if (e.name === "ValidationError") {
+      const message = e.message || "Bad request";
+      return res.status(400).json({
+        status: 400,
+        message: message.split(":")[0],
+        data: null,
+      });
+    }
+
     return res.status(500).json({
       status: 500,
       message: "Internal server error",
@@ -132,6 +152,16 @@ router.get("/get-order/:orderId", verifyJwt, async (req, res) => {
     });
   } catch (e) {
     console.error(`Error in get order by id`, e);
+
+    if (e.name === "ValidationError") {
+      const message = e.message || "Bad request";
+      return res.status(400).json({
+        status: 400,
+        message: message.split(":")[0],
+        data: null,
+      });
+    }
+
     return res.status(500).json({
       status: 500,
       message: "Internal server error",
@@ -213,6 +243,16 @@ router.patch("/update-order/:orderId", verifyJwt, async (req, res) => {
     });
   } catch (e) {
     console.error(`Error in update order by id`, e);
+
+    if (e.name === "ValidationError") {
+      const message = e.message || "Bad request";
+      return res.status(400).json({
+        status: 400,
+        message: message.split(":")[0],
+        data: null,
+      });
+    }
+
     return res.status(500).json({
       status: 500,
       message: "Internal server error",
