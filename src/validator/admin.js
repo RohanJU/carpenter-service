@@ -56,8 +56,18 @@ const validateGetEmployeeRequestQuery = (query) => {
   return q;
 };
 
+const validateGetEmployeeBulkRequestBody = (body) => {
+  const employeeSchema = Joi.object({
+    workerIds: Joi.array().items(Joi.string())
+  })
+    .unknown();
+
+  return Joi.attempt(body, employeeSchema);
+};
+
 module.exports = {
   validateAddEmployeeRequestBody,
   validateUpdateEmployeeRequestBody,
   validateGetEmployeeRequestQuery,
+  validateGetEmployeeBulkRequestBody
 };

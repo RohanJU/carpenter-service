@@ -6,6 +6,7 @@ const {
   validateAddEmployeeRequestBody,
   validateUpdateEmployeeRequestBody,
   validateGetEmployeeRequestQuery,
+  validateGetEmployeeBulkRequestBody,
 } = require("../validator/admin");
 const { hash } = require("../utils/encryption");
 const allowedRoles = require("../middleware/allowedRoles");
@@ -93,6 +94,62 @@ router.get(
           pageNumber,
           pageSize,
           totalCount,
+          employees: employees.map((employee) => {
+            return {
+              uuid: employee.uuid,
+              name: employee.name,
+              email: employee.email,
+              phone: employee.phone,
+              designation: employee.designation,
+              address: employee.address,
+              addedBy: employee.addedBy,
+              modifiedBy: employee.modifiedBy,
+            };
+          }),
+        },
+      });
+    } catch (e) {
+      console.error(`Error in get employees`, e);
+
+      if (e.name === "ValidationError") {
+        const message = e.message || "Bad request";
+        return res.status(400).json({
+          status: 400,
+          message: message.split(":")[0],
+          data: null,
+        });
+      }
+
+      return res.status(500).json({
+        status: 500,
+        message: e.message || "Internal server error",
+        data: null,
+      });
+    }
+  }
+);
+
+router.post(
+  "/get-employee/bulk",
+  verifyJwt,
+  allowedRoles(["ADMIN"]),
+  async (req, res) => {
+    try {
+      const { workerIds } = validateGetEmployeeBulkRequestBody(req.body);
+
+      const filter = {
+        $or: workerIds.map((workerId) => {
+          return {
+            uuid: workerId,
+          };
+        }),
+      };
+
+      const employees = await Employee.find(filter);
+
+      return res.status(200).json({
+        status: 200,
+        data: {
           employees: employees.map((employee) => {
             return {
               uuid: employee.uuid,
