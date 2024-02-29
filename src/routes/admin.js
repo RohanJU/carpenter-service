@@ -137,6 +137,15 @@ router.post(
     try {
       const { workerIds } = validateGetEmployeeBulkRequestBody(req.body);
 
+      if (!workerIds || workerIds.length === 0) {
+        return res.status(200).json({
+          status: 200,
+          data: {
+            employees: [],
+          },
+        });
+      }
+
       const filter = {
         $or: workerIds.map((workerId) => {
           return {
