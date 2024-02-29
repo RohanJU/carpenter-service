@@ -58,7 +58,7 @@ const validateGetEmployeeRequestQuery = (query) => {
 
 const validateGetEmployeeBulkRequestBody = (body) => {
   const employeeSchema = Joi.object({
-    workerIds: Joi.array().items(Joi.string())
+    workerIds: Joi.array().items(Joi.string()).empty()
   })
     .unknown();
 
